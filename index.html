@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width,
+    initial-scale=1,
+    maximum-scale=1,
+    user-scalable=no"
+>
+
+<title>Proyector Studio</title>
+
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+
+html,
+body{
+
+    margin:0;
+
+    width:100%;
+
+    height:100%;
+
+    background:#000;
+
+    overflow:hidden;
+
+}
+
+
+#pantalla{
+
+    position:fixed;
+
+    inset:0;
+
+    width:100vw;
+
+    height:100vh;
+
+    background:#000;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    overflow:hidden;
+
+}
+
+
+/* =========================
+   TEXTO
+========================= */
+
+#texto{
+
+    max-width:94vw;
+
+    max-height:92vh;
+
+    text-align:center;
+
+    white-space:pre-wrap;
+
+    word-break:break-word;
+
+    opacity:0;
+
+}
+
+
+/* =========================
+   FOTO
+========================= */
+
+#foto{
+
+    display:none;
+
+    max-width:94vw;
+
+    max-height:92vh;
+
+    object-fit:contain;
+
+}
+
+
+/* =========================
+   VIDEO
+========================= */
+
+#video{
+
+    display:none;
+
+    width:100vw;
+
+    height:100vh;
+
+    object-fit:contain;
+
+    background:#000;
+
+}
+
+
+/* =========================
+   ESTADO
+========================= */
+
+#estado{
+
+    position:fixed;
+
+    top:12px;
+
+    right:12px;
+
+    width:11px;
+
+    height:11px;
+
+    border-radius:50%;
+
+    background:#ef4444;
+
+    box-shadow:
+        0 0 12px
+        rgba(239,68,68,.8);
+
+    z-index:50;
+
+    opacity:.8;
+
+}
+
+
+/* =========================
+   ANIMACIONES
+========================= */
+
+.aparecer{
+
+    animation:
+        aparecer .8s ease forwards;
+
+}
+
+
+.escribir{
+
+    animation:
+        escribir 1.4s ease forwards;
+
+}
+
+
+.desvanecer{
+
+    animation:
+        desvanecer 1.1s ease forwards;
+
+}
+
+
+@keyframes aparecer{
+
+    from{
+
+        opacity:0;
+
+        transform:
+            scale(.75);
+
+        filter:
+            blur(10px);
+
+    }
+
+
+    to{
+
+        opacity:1;
+
+        transform:
+            scale(1);
+
+        filter:
+            blur(0);
+
+    }
+
+}
+
+
+@keyframes escribir{
+
+    from{
+
+        opacity:0;
+
+        transform:
+            translateY(30px);
+
+    }
+
+
+    to{
+
+        opacity:1;
+
+        transform:
+            translateY(0);
+
+    }
+
+}
+
+
+@keyframes desvanecer{
+
+    from{
+
+        opacity:1;
+
+        transform:
+            scale(1);
+
+        filter:
+            blur(0);
+
+    }
+
+
+    to{
+
+        opacity:0;
+
+        transform:
+            scale(1.08);
+
+        filter:
+            blur(12px);
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     PANTALLA
+========================= -->
+
+<div id="pantalla">
+
+
+<div id="texto"></div>
+
+
+<img
+    id="foto"
+    alt=""
+>
+
+
+<video
+    id="video"
+    playsinline
+    autoplay
+    loop
+></video>
+
+
+</div>
+
+
+<!-- INDICADOR -->
+
+<div id="estado"></div>
+
+
+<script type="module">
+
+
+/* =========================
+   FIREBASE
+========================= */
+
+import {
+    initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+
+import {
+    getDatabase,
+    ref,
+    set,
+    onValue
+}
+from
+"https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+
+/* =========================
+   CONFIGURACIÓN
+========================= */
+
+const firebaseConfig = {
+
+    apiKey:
+        "AIzaSyCAcJ8Jv2WJCl3jlbwTItxESgQD_AGlJQQ",
+
+    authDomain:
+        "nuevo-8c7a8.firebaseapp.com",
+
+    databaseURL:
+        "https://nuevo-8c7a8-default-rtdb.firebaseio.com",
+
+    projectId:
+        "nuevo-8c7a8",
+
+    storageBucket:
+        "nuevo-8c7a8.firebasestorage.app",
+
+    messagingSenderId:
+        "109852011535",
+
+    appId:
+        "1:109852011535:web:01774f3680b8f4d967477a",
+
+    measurementId:
+        "G-R3R0M3G79M"
+
+};
+
+
+const app =
+    initializeApp(
+        firebaseConfig
+    );
+
+
+const db =
+    getDatabase(app);
+
+
+/* =========================
+   SALA
+========================= */
+
+const sala =
+    "proyector_principal";
+
+
+const screenRef =
+    ref(
+        db,
+        "proyectores/" + sala
+    );
+
+
+const heartbeatRef =
+    ref(
+        db,
+        "estado_proyectores/" + sala
+    );
+
+
+/* =========================
+   ELEMENTOS
+========================= */
+
+const texto =
+    document.getElementById(
+        "texto"
+    );
+
+
+const foto =
+    document.getElementById(
+        "foto"
+    );
+
+
+const video =
+    document.getElementById(
+        "video"
+    );
+
+
+const estado =
+    document.getElementById(
+        "estado"
+    );
+
+
+/* =========================
+   HEARTBEAT
+========================= */
+
+async function enviarHeartbeat(){
+
+    try{
+
+        await set(
+            heartbeatRef,
+            {
+
+                activo:
+                    true,
+
+                timestamp:
+                    Date.now()
+
+            }
+        );
+
+
+        /*
+         * Verde:
+         * el proyector está activo.
+         */
+
+        estado.style.background =
+            "#20c969";
+
+
+        estado.style.boxShadow =
+            "0 0 14px rgba(32,201,105,.8)";
+
+
+    }
+    catch(error){
+
+        console.error(
+            "Heartbeat:",
+            error
+        );
+
+
+        estado.style.background =
+            "#ef4444";
+
+    }
+
+}
+
+
+/*
+ * Primera señal
+ */
+
+enviarHeartbeat();
+
+
+/*
+ * Cada 3 segundos
+ */
+
+setInterval(
+    enviarHeartbeat,
+    3000
+);
+
+
+/* =========================
+   OCULTAR TODO
+========================= */
+
+function ocultarTodo(){
+
+    texto.style.display =
+        "none";
+
+
+    foto.style.display =
+        "none";
+
+
+    video.style.display =
+        "none";
+
+
+    video.pause();
+
+}
+
+
+/* =========================
+   REINICIAR ANIMACIÓN
+========================= */
+
+function limpiarAnimacion(){
+
+    texto.classList.remove(
+
+        "aparecer",
+
+        "escribir",
+
+        "desvanecer"
+
+    );
+
+
+    void texto.offsetWidth;
+
+}
+
+
+/* =========================
+   MOSTRAR ANIMACIÓN
+========================= */
+
+function aplicarAnimacion(
+    animacion
+){
+
+    if(
+        animacion &&
+        animacion !== "none"
+    ){
+
+        texto.classList.add(
+            animacion
+        );
+
+    }
+    else{
+
+        texto.style.opacity =
+            "1";
+
+    }
+
+}
+
+
+/* =========================
+   ESCUCHAR PANTALLA
+========================= */
+
+onValue(
+
+    screenRef,
+
+    snapshot => {
+
+
+        const datos =
+            snapshot.val();
+
+
+        if(!datos)
+            return;
+
+
+        /* =====================
+           BORRAR
+        ===================== */
+
+        if(
+            datos.tipo ===
+            "borrar"
+        ){
+
+            foto.style.display =
+                "none";
+
+
+            video.style.display =
+                "none";
+
+
+            video.pause();
+
+
+            texto.style.display =
+                "block";
+
+
+            limpiarAnimacion();
+
+
+            texto.classList.add(
+                "desvanecer"
+            );
+
+
+            return;
+
+        }
+
+
+        /* =====================
+           TEXTO
+        ===================== */
+
+        if(
+            datos.tipo ===
+            "texto"
+        ){
+
+            ocultarTodo();
+
+
+            texto.style.display =
+                "block";
+
+
+            texto.textContent =
+                datos.texto || "";
+
+
+            texto.style.fontSize =
+                (
+                    datos.fontSize ||
+                    72
+                ) + "px";
+
+
+            texto.style.fontFamily =
+                datos.fontFamily ||
+                "Arial";
+
+
+            texto.style.color =
+                datos.color ||
+                "#ffffff";
+
+
+            texto.style.textAlign =
+                datos.align ||
+                "center";
+
+
+            limpiarAnimacion();
+
+
+            aplicarAnimacion(
+                datos.animation
+            );
+
+        }
+
+
+        /* =====================
+           FOTO
+        ===================== */
+
+        if(
+            datos.tipo ===
+            "foto"
+        ){
+
+            ocultarTodo();
+
+
+            foto.src =
+                datos.url;
+
+
+            foto.style.display =
+                "block";
+
+
+            foto.style.opacity =
+                "0";
+
+
+            foto.animate(
+
+                [
+
+                    {
+                        opacity:0,
+
+                        transform:
+                            "scale(.85)"
+
+                    },
+
+                    {
+                        opacity:1,
+
+                        transform:
+                            "scale(1)"
+
+                    }
+
+                ],
+
+                {
+
+                    duration:800,
+
+                    fill:"forwards"
+
+                }
+
+            );
+
+        }
+
+
+        /* =====================
+           VIDEO
+        ===================== */
+
+        if(
+            datos.tipo ===
+            "video"
+        ){
+
+            ocultarTodo();
+
+
+            video.src =
+                datos.url;
+
+
+            video.style.display =
+                "block";
+
+
+            video.load();
+
+
+            /*
+             * Intentar reproducir
+             * automáticamente.
+             */
+
+            video.play()
+                .catch(
+                    error => {
+
+                        console.log(
+                            "Autoplay:",
+                            error
+                        );
+
+                    }
+                );
+
+        }
+
+    }
+
+);
+
+
+/* =========================
+   PANTALLA COMPLETA
+========================= */
+
+document.addEventListener(
+
+    "click",
+
+    () => {
+
+        document
+            .documentElement
+            .requestFullscreen?.()
+            .catch(
+                () => {}
+            );
+
+    },
+
+    {
+        once:true
+    }
+
+);
+
+</script>
+
+</body>
+
+</html>
