@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Rifa Online</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 1000px; margin: 0 auto; }
+    header {
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: white;
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 1.6rem; }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+      color: #4c1d95;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: #a855f7;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary {
+      background: #7c3aed;
+      color: white;
+    }
+    .btn-primary:hover { background: #6d28d9; }
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #334155;
+    }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    .stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      min-width: 120px;
+      text-align: center;
+    }
+    .stat-box .num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #7c3aed;
+    }
+    .stat-box .label {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #475569;
+    }
+    tr:hover { background: #f8fafc; }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .badge-ok { background: #dcfce7; color: #166534; }
+    .badge-pend { background: #fef3c7; color: #92400e; }
+    .login-box {
+      max-width: 360px;
+      margin: 80px auto;
+      background: white;
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .login-box h1 { margin-bottom: 8px; font-size: 1.5rem; }
+    .login-box p { color: #64748b; margin-bottom: 24px; }
+    .hidden { display: none !important; }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #166534;
+      color: white;
+      padding: 14px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 200;
+    }
+    .toast.show { display: block; }
+    .toast.error { background: #b91c1c; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .link-publico {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-top: 12px;
+      word-break: break-all;
+      font-size: 0.9rem;
+    }
+    .link-publico a { color: #166534; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <!-- Pantalla de login -->
+  <div id="loginScreen" class="login-box">
+    <h1>Panel de Administración</h1>
+    <p>Ingresa la contraseña para continuar</p>
+    <div class="form-group">
+      <input type="password" id="passwordInput" placeholder="Contraseña" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" style="width:100%" id="btnLogin">Entrar</button>
+    <p style="margin-top:16px;font-size:0.8rem;color:#94a3b8">Contraseña por defecto: <strong>admin123</strong></p>
+  </div>
+
+  <!-- Panel principal -->
+  <div id="adminPanel" class="container hidden">
+    <header>
+      <h1>Administración de Rifa</h1>
+    </header>
+
+    <!-- Crear / Editar rifa -->
+    <div class="card">
+      <h2>Configurar Rifa</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre de la rifa</label>
+          <input type="text" id="nombreRifa" placeholder="Ej: Rifa iPhone 16">
+        </div>
+        <div class="form-group">
+          <label>Total de números</label>
+          <input type="number" id="totalNumeros" min="1" max="1000" value="100" placeholder="100">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Descripción (opcional)</label>
+        <input type="text" id="descripcionRifa" placeholder="Ej: $50 por número · Sorteo el 30 de agosto">
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="btnCrear">Crear / Actualizar Rifa</button>
+        <button class="btn btn-danger" id="btnReiniciar">Reiniciar todos los números</button>
+      </div>
+      <div class="link-publico" id="linkPublico" style="display:none">
+        Link público para compartir:<br>
+        <a id="urlPublica" href="#" target="_blank"></a>
+      </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="card">
+      <h2>Estado actual</h2>
+      <div class="stats">
+        <div class="stat-box">
+          <div class="num" id="statDisponibles">-</div>
+          <div class="label">Disponibles</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="statReservados">-</div>
+          <div class="label">Reservados</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="statTotal">-</div>
+          <div class="label">Total</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de reservados -->
+    <div class="card">
+      <h2>Números reservados</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Nº</th>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody id="tablaReservados">
+            <tr><td colspan="4" style="text-align:center;color:#94a3b8">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-database-compat.js"></script>
+  <script>
+    // ===== TU CONFIGURACIÓN DE FIREBASE =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAcJ8Jv2WJCl3jlbwTItxESgQD_AGlJQQ",
+      authDomain: "nuevo-8c7a8.firebaseapp.com",
+      databaseURL: "https://nuevo-8c7a8-default-rtdb.firebaseio.com",
+      projectId: "nuevo-8c7a8",
+      storageBucket: "nuevo-8c7a8.firebasestorage.app",
+      messagingSenderId: "109852011535",
+      appId: "1:109852011535:web:01774f3680b8f4d967477a",
+      measurementId: "G-R3R0M3G79M"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const RIFA_ID = "principal";
+    const rifaRef = db.ref(`rifas/${RIFA_ID}`);
+    const PASSWORD = "admin123"; // Cambia esta contraseña
+
+    // ===== Login =====
+    const loginScreen = document.getElementById("loginScreen");
+    const adminPanel = document.getElementById("adminPanel");
+
+    if (sessionStorage.getItem("adminLogueado") === "si") {
+      mostrarPanel();
+    }
+
+    document.getElementById("btnLogin").addEventListener("click", intentarLogin);
+    document.getElementById("passwordInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") intentarLogin();
+    });
+
+    function intentarLogin() {
+      const pass = document.getElementById("passwordInput").value;
+      if (pass === PASSWORD) {
+        sessionStorage.setItem("adminLogueado", "si");
+        mostrarPanel();
+      } else {
+        mostrarToast("Contraseña incorrecta", true);
+      }
+    }
+
+    function mostrarPanel() {
+      loginScreen.classList.add("hidden");
+      adminPanel.classList.remove("hidden");
+      cargarDatos();
+      // Mostrar link público
+      const url = window.location.href.replace("admin.html", "index.html");
+      document.getElementById("urlPublica").href = url;
+      document.getElementById("urlPublica").textContent = url;
+      document.getElementById("linkPublico").style.display = "block";
+    }
+
+    // ===== Crear / Actualizar rifa =====
+    document.getElementById("btnCrear").addEventListener("click", async () => {
+      const nombre = document.getElementById("nombreRifa").value.trim();
+      const total = parseInt(document.getElementById("totalNumeros").value) || 100;
+      const descripcion = document.getElementById("descripcionRifa").value.trim();
+
+      if (!nombre) {
+        mostrarToast("Escribe un nombre para la rifa", true);
+        return;
+      }
+      if (total < 1 || total > 1000) {
+        mostrarToast("El total debe estar entre 1 y 1000", true);
+        return;
+      }
+
+      const btn = document.getElementById("btnCrear");
+      btn.disabled = true;
+      btn.textContent = "Guardando...";
+
+      try {
+        // Guardar configuración
+        await rifaRef.child("config").set({
+          nombre,
+          totalNumeros: total,
+          descripcion,
+          creada: new Date().toISOString()
+        });
+
+        // Inicializar números que no existan
+        const snapshot = await rifaRef.child("numeros").once("value");
+        const existentes = snapshot.val() || {};
+        const updates = {};
+
+        for (let i = 1; i <= total; i++) {
+          if (!existentes[i]) {
+            updates[i] = { estado: "disponible" };
+          }
+        }
+        // Si se reduce el total, no borramos los ya reservados (solo se dejan de mostrar)
+        if (Object.keys(updates).length > 0) {
+          await rifaRef.child("numeros").update(updates);
+        }
+
+        mostrarToast("Rifa guardada correctamente");
+      } catch (err) {
+        console.error(err);
+        mostrarToast("Error al guardar", true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Crear / Actualizar Rifa";
+      }
+    });
+
+    // ===== Reiniciar números =====
+    document.getElementById("btnReiniciar").addEventListener("click", async () => {
+      if (!confirm("¿Estás seguro? Se borrarán TODAS las reservas y todos los números quedarán disponibles otra vez.")) {
+        return;
+      }
+
+      const total = parseInt(document.getElementById("totalNumeros").value) || 100;
+      const updates = {};
+      for (let i = 1; i <= total; i++) {
+        updates[i] = { estado: "disponible" };
+      }
+
+      try {
+        await rifaRef.child("numeros").set(updates);
+        mostrarToast("Todos los números fueron reiniciados");
+      } catch (err) {
+        console.error(err);
+        mostrarToast("Error al reiniciar", true);
+      }
+    });
+
+    // ===== Cargar datos en tiempo real =====
+    function cargarDatos() {
+      rifaRef.on("value", (snapshot) => {
+        const data = snapshot.val();
+        if (!data || !data.config) {
+          document.getElementById("statDisponibles").textContent = "-";
+          document.getElementById("statReservados").textContent = "-";
+          document.getElementById("statTotal").textContent = "-";
+          document.getElementById("tablaReservados").innerHTML =
+            `<tr><td colspan="4" style="text-align:center;color:#94a3b8">No hay rifa creada aún</td></tr>`;
+          return;
+        }
+
+        // Rellenar formulario
+        document.getElementById("nombreRifa").value = data.config.nombre || "";
+        document.getElementById("totalNumeros").value = data.config.totalNumeros || 100;
+        document.getElementById("descripcionRifa").value = data.config.descripcion || "";
+
+        const total = data.config.totalNumeros || 0;
+        const numeros = data.numeros || {};
+        let disponibles = 0;
+        let reservados = 0;
+        const listaReservados = [];
+
+        for (let i = 1; i <= total; i++) {
+          const n = numeros[i];
+          if (n && n.estado === "reservado") {
+            reservados++;
+            listaReservados.push({
+              numero: i,
+              nombre: n.nombre || "-",
+              telefono: n.telefono || "-",
+              fecha: n.fecha ? new Date(n.fecha).toLocaleString("es-MX") : "-"
+            });
+          } else {
+            disponibles++;
+          }
+        }
+
+        document.getElementById("statDisponibles").textContent = disponibles;
+        document.getElementById("statReservados").textContent = reservados;
+        document.getElementById("statTotal").textContent = total;
+
+        // Tabla
+        if (listaReservados.length === 0) {
+          document.getElementById("tablaReservados").innerHTML =
+            `<tr><td colspan="4" style="text-align:center;color:#94a3b8">Ningún número reservado todavía</td></tr>`;
+        } else {
+          listaReservados.sort((a, b) => a.numero - b.numero);
+          document.getElementById("tablaReservados").innerHTML = listaReservados.map(r => `
+            <tr>
+              <td><strong>${r.numero}</strong></td>
+              <td>${r.nombre}</td>
+              <td>${r.telefono}</td>
+              <td>${r.fecha}</td>
+            </tr>
+          `).join("");
+        }
+      });
+    }
+
+    function mostrarToast(msg, esError = false) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.className = "toast show" + (esError ? " error" : "");
+      setTimeout(() => toast.classList.remove("show"), 3500);
+    }
+  </script>
+</body>
+</html>
