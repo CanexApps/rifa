@@ -137,6 +137,13 @@
     .btn-danger:hover { background: #b91c1c; }
     .btn-purple { background: #7c3aed; color: white; }
     .btn-purple:hover { background: #6d28d9; }
+    .btn-copy {
+      background: #16a34a;
+      color: white;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+    }
+    .btn-copy:hover { background: #15803d; }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
     .stat-box {
       background: #f8fafc;
@@ -201,13 +208,21 @@
       border-radius: 12px;
       padding: 14px;
       margin-top: 14px;
-      word-break: break-all;
     }
-    .link-box strong { color: #166534; display: block; margin-bottom: 6px; font-size: 0.9rem; }
-    .link-box .url {
+    .link-box strong { color: #166534; display: block; margin-bottom: 8px; font-size: 0.9rem; }
+    .link-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .link-row .url {
       color: #166534;
       font-weight: 600;
-      font-size: 0.88rem;
+      font-size: 0.85rem;
+      word-break: break-all;
+      flex: 1;
+      min-width: 200px;
     }
     .leyenda {
       display: flex;
@@ -334,10 +349,14 @@
         <button class="btn btn-purple" id="btnCrear">Crear / Actualizar Rifa</button>
         <button class="btn btn-danger" id="btnReiniciar">Reiniciar números</button>
       </div>
+
       <div class="link-box">
         <strong>Link para compartir con la gente:</strong>
-        <div class="url" id="urlPublica"></div>
-        <small style="color:#64748b;display:block;margin-top:6px">Copia este link y envíaselo. Ellos solo verán los números disponibles.</small>
+        <div class="link-row">
+          <div class="url" id="urlPublica">Cargando...</div>
+          <button class="btn btn-copy" id="btnCopiarLink">Copiar link</button>
+        </div>
+        <small style="color:#64748b;display:block;margin-top:8px">Copia este link y envíaselo. Ellos solo verán los números disponibles.</small>
       </div>
     </div>
 
@@ -374,7 +393,7 @@
         <div class="loading">Cargando...</div>
       </div>
       <p style="font-size:0.8rem;color:#64748b;margin-top:8px">
-        Toca un número <strong>naranja (reservado)</strong> para marcarlo como <strong>pagado</strong>. Toca un <strong>azul (pagado)</strong> para volverlo a reservado.
+        Toca un número <strong>naranja</strong> para marcarlo como <strong>pagado</strong>. Toca un <strong>azul</strong> para volverlo a reservado.
       </p>
     </div>
 
@@ -405,7 +424,6 @@
       <p id="descripcionRifa"></p>
       <div class="stats">
         <div class="stat">Disponibles: <strong id="disponibles">-</strong></div>
-        <div class="stat">Tomados: <strong id="reservados">-</strong></div>
         <div class="stat">Total: <strong id="total">-</strong></div>
       </div>
     </header>
@@ -498,7 +516,38 @@
 
     function actualizarLinkPublico() {
       var base = window.location.href.split("?")[0].split("#")[0];
-      document.getElementById("urlPublica").textContent = base + "?publico";
+      var link = base + "?publico";
+      document.getElementById("urlPublica").textContent = link;
+      document.getElementById("urlPublica").dataset.link = link;
+    }
+
+    document.getElementById("btnCopiarLink").addEventListener("click", function() {
+      var link = document.getElementById("urlPublica").dataset.link || document.getElementById("urlPublica").textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(function() {
+          mostrarToast("Link copiado");
+        }).catch(function() {
+          copiarFallback(link);
+        });
+      } else {
+        copiarFallback(link);
+      }
+    });
+
+    function copiarFallback(texto) {
+      var ta = document.createElement("textarea");
+      ta.value = texto;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        mostrarToast("Link copiado");
+      } catch (e) {
+        mostrarToast("No se pudo copiar. Cópialo manualmente.", true);
+      }
+      document.body.removeChild(ta);
     }
 
     function cargarAdmin() {
@@ -599,8 +648,9 @@
 
       var numeros = data.numeros || {};
       var total = config.totalNumeros || 0;
-      var disponibles = 0, tomados = 0;
+      var disponibles = 0;
 
+      // SOLO mostrar números disponibles (los apartados desaparecen)
       var html = '<div class="grid">';
       for (var i = 1; i <= total; i++) {
         var num = numeros[i];
@@ -608,16 +658,16 @@
         if (estado === "disponible") {
           disponibles++;
           html += '<button class="numero disponible" data-num="' + i + '">' + i + '</button>';
-        } else {
-          tomados++;
-          html += '<button class="numero reservado" disabled>' + i + '</button>';
         }
       }
       html += '</div>';
 
+      if (disponibles === 0) {
+        html = '<div class="empty"><p>Ya no hay números disponibles.</p></div>';
+      }
+
       document.getElementById("contenido").innerHTML = html;
       document.getElementById("disponibles").textContent = disponibles;
-      document.getElementById("reservados").textContent = tomados;
       document.getElementById("total").textContent = total;
 
       var botones = document.querySelectorAll(".numero.disponible");
