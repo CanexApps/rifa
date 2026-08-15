@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rifa Online - Números Disponibles</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    header {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      color: white;
+      padding: 24px;
+      border-radius: 16px;
+      text-align: center;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 1.8rem; margin-bottom: 8px; }
+    header p { opacity: 0.9; font-size: 1rem; }
+    .stats {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .stat {
+      background: rgba(255,255,255,0.2);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .numero {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #22c55e;
+      color: white;
+      font-weight: 700;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .numero:hover {
+      transform: scale(1.08);
+      background: #16a34a;
+    }
+    .numero.reservado {
+      background: #94a3b8;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .numero.reservado:hover {
+      transform: none;
+      background: #94a3b8;
+    }
+    .empty {
+      text-align: center;
+      padding: 40px;
+      color: #64748b;
+      font-size: 1.1rem;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .modal h2 {
+      margin-bottom: 8px;
+      font-size: 1.4rem;
+    }
+    .modal .numero-seleccionado {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #1e3a8a;
+      text-align: center;
+      margin: 16px 0;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: border 0.2s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary {
+      background: #1e3a8a;
+      color: white;
+    }
+    .btn-primary:hover { background: #1e40af; }
+    .btn-primary:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #334155;
+    }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #64748b;
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #166534;
+      color: white;
+      padding: 14px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 200;
+    }
+    .toast.show { display: block; }
+    .toast.error { background: #b91c1c; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1 id="tituloRifa">Cargando rifa...</h1>
+      <p id="descripcionRifa"></p>
+      <div class="stats">
+        <div class="stat">Disponibles: <strong id="disponibles">-</strong></div>
+        <div class="stat">Reservados: <strong id="reservados">-</strong></div>
+        <div class="stat">Total: <strong id="total">-</strong></div>
+      </div>
+    </header>
+
+    <div id="contenido">
+      <div class="loading">Cargando números...</div>
+    </div>
+  </div>
+
+  <!-- Modal de reserva -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h2>Reservar número</h2>
+      <div class="numero-seleccionado" id="numeroModal">-</div>
+      <form id="formReserva">
+        <div class="form-group">
+          <label for="nombre">Nombre completo</label>
+          <input type="text" id="nombre" required placeholder="Ej: Juan Pérez" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="telefono">Teléfono / WhatsApp</label>
+          <input type="tel" id="telefono" required placeholder="Ej: 55 1234 5678" autocomplete="tel">
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnReservar">Reservar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAcJ8Jv2WJCl3jlbwTItxESgQD_AGlJQQ",
+      authDomain: "nuevo-8c7a8.firebaseapp.com",
+      databaseURL: "https://nuevo-8c7a8-default-rtdb.firebaseio.com",
+      projectId: "nuevo-8c7a8",
+      storageBucket: "nuevo-8c7a8.firebasestorage.app",
+      messagingSenderId: "109852011535",
+      appId: "1:109852011535:web:01774f3680b8f4d967477a",
+      measurementId: "G-R3R0M3G79M"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const RIFA_ID = "principal";
+    const rifaRef = db.ref(`rifas/${RIFA_ID}`);
+
+    let numeroSeleccionado = null;
+
+    rifaRef.on("value", (snapshot) => {
+      const data = snapshot.val();
+      if (!data || !data.config) {
+        document.getElementById("contenido").innerHTML = `
+          <div class="empty">
+            <p>Aún no hay una rifa activa.</p>
+            <p style="margin-top:12px;font-size:0.9rem">El administrador debe crearla primero.</p>
+          </div>`;
+        document.getElementById("tituloRifa").textContent = "Sin rifa activa";
+        return;
+      }
+
+      const config = data.config;
+      document.getElementById("tituloRifa").textContent = config.nombre || "Rifa";
+      document.getElementById("descripcionRifa").textContent = config.descripcion || "";
+
+      const numeros = data.numeros || {};
+      const total = config.totalNumeros || 0;
+      let disponibles = 0;
+      let reservados = 0;
+
+      let html = '<div class="grid">';
+      for (let i = 1; i <= total; i++) {
+        const num = numeros[i];
+        const estado = num ? num.estado : "disponible";
+        if (estado === "disponible") {
+          disponibles++;
+          html += `<button class="numero" data-num="${i}">${i}</button>`;
+        } else {
+          reservados++;
+          html += `<button class="numero reservado" disabled>${i}</button>`;
+        }
+      }
+      html += '</div>';
+
+      document.getElementById("contenido").innerHTML = html;
+      document.getElementById("disponibles").textContent = disponibles;
+      document.getElementById("reservados").textContent = reservados;
+      document.getElementById("total").textContent = total;
+
+      document.querySelectorAll(".numero:not(.reservado)").forEach(btn => {
+        btn.addEventListener("click", () => abrirModal(parseInt(btn.dataset.num)));
+      });
+    });
+
+    function abrirModal(num) {
+      numeroSeleccionado = num;
+      document.getElementById("numeroModal").textContent = num;
+      document.getElementById("nombre").value = "";
+      document.getElementById("telefono").value = "";
+      document.getElementById("modal").classList.add("show");
+      document.getElementById("nombre").focus();
+    }
+
+    function cerrarModal() {
+      document.getElementById("modal").classList.remove("show");
+      numeroSeleccionado = null;
+    }
+
+    document.getElementById("btnCancelar").addEventListener("click", cerrarModal);
+    document.getElementById("modal").addEventListener("click", (e) => {
+      if (e.target === document.getElementById("modal")) cerrarModal();
+    });
+
+    document.getElementById("formReserva").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!numeroSeleccionado) return;
+
+      const nombre = document.getElementById("nombre").value.trim();
+      const telefono = document.getElementById("telefono").value.trim();
+      if (!nombre || !telefono) return;
+
+      const btn = document.getElementById("btnReservar");
+      btn.disabled = true;
+      btn.textContent = "Reservando...";
+
+      const numRef = db.ref(`rifas/${RIFA_ID}/numeros/${numeroSeleccionado}`);
+
+      try {
+        const result = await numRef.transaction((current) => {
+          if (current === null || current.estado === "disponible") {
+            return {
+              estado: "reservado",
+              nombre: nombre,
+              telefono: telefono,
+              fecha: new Date().toISOString()
+            };
+          }
+          return;
+        });
+
+        if (result.committed) {
+          mostrarToast(`¡Número ${numeroSeleccionado} reservado con éxito!`);
+          cerrarModal();
+        } else {
+          mostrarToast("Ese número ya fue tomado por alguien más. Elige otro.", true);
+          cerrarModal();
+        }
+      } catch (err) {
+        console.error(err);
+        mostrarToast("Error al reservar. Intenta de nuevo.", true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Reservar";
+      }
+    });
+
+    function mostrarToast(msg, esError = false) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.className = "toast show" + (esError ? " error" : "");
+      setTimeout(() => toast.classList.remove("show"), 3500);
+    }
+  </script>
+</body>
+</html>
