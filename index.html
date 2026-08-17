@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rifa Online</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+      padding: 16px;
+      padding-bottom: 110px;
+    }
+    .container { max-width: 960px; margin: 0 auto; }
+    header {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      color: white;
+      padding: 22px 20px;
+      border-radius: 18px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 20px rgba(30,58,138,0.25);
+      position: relative;
+    }
+    header.admin-header {
+      background: linear-gradient(135deg, #5b21b6, #7c3aed);
+      box-shadow: 0 8px 20px rgba(91,33,182,0.25);
+    }
+    header h1 { font-size: 1.45rem; font-weight: 700; margin-bottom: 6px; }
+    header p { opacity: 0.9; font-size: 0.95rem; }
+    .stats { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+    .stat {
+      background: rgba(255,255,255,0.18);
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+      gap: 9px;
+      margin-bottom: 20px;
+    }
+    .numero {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.05rem;
+      border-radius: 12px;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      color: white;
+      background: #22c55e;
+    }
+    .numero:hover { transform: scale(1.07); }
+    .numero.seleccionado { background: #eab308; border-color: #ca8a04; transform: scale(1.05); }
+    .numero.reservado { background: #f97316; }
+    .numero.pagado { background: #3b82f6; }
+    .numero.disponible { background: #22c55e; }
+    .empty, .loading { text-align: center; padding: 36px 16px; color: #64748b; font-size: 1.05rem; }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    .card h2 { font-size: 1.1rem; margin-bottom: 14px; color: #5b21b6; font-weight: 700; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.88rem; color: #334155;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 11px 13px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+    }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #7c3aed; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+    .btn {
+      padding: 11px 18px; border: none; border-radius: 10px;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+    }
+    .btn-primary { background: #1e3a8a; color: white; }
+    .btn-secondary { background: #e2e8f0; color: #334155; }
+    .btn-danger { background: #dc2626; color: white; }
+    .btn-purple { background: #7c3aed; color: white; }
+    .btn-whatsapp { background: #25d366; color: white; }
+    .btn-success { background: #16a34a; color: white; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .stat-box {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 14px 16px; min-width: 100px; text-align: center;
+    }
+    .stat-box .num { font-size: 1.6rem; font-weight: 800; color: #5b21b6; }
+    .stat-box .label { font-size: 0.78rem; color: #64748b; margin-top: 3px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f8fafc; font-weight: 600; color: #475569; font-size: 0.8rem; }
+    .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .badge-reservado { background: #ffedd5; color: #c2410c; }
+    .badge-pagado { background: #dbeafe; color: #1d4ed8; }
+    .link-box {
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 14px; margin-top: 14px;
+    }
+    .link-box strong { color: #166534; display: block; margin-bottom: 8px; font-size: 0.9rem; }
+    .link-row .url { color: #166534; font-weight: 600; font-size: 0.85rem; word-break: break-all; }
+    .leyenda { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; font-size: 0.82rem; color: #475569; }
+    .leyenda span { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 12px; height: 12px; border-radius: 4px; }
+    .dot-disponible { background: #22c55e; }
+    .dot-reservado { background: #f97316; }
+    .dot-pagado { background: #3b82f6; }
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: white; border-radius: 18px; padding: 24px; width: 100%; max-width: 380px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    }
+    .modal h2 { margin-bottom: 8px; font-size: 1.25rem; }
+    .modal .numeros-seleccionados {
+      font-size: 0.95rem; font-weight: 600; color: #1e3a8a; text-align: center;
+      margin: 10px 0 6px; background: #f1f5f9; padding: 10px; border-radius: 10px;
+    }
+    .modal .total-modal { text-align: center; font-size: 1.2rem; font-weight: 800; color: #16a34a; margin-bottom: 14px; }
+    .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+    .btn-row .btn { flex: 1; }
+    .toast {
+      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+      background: #166534; color: white; padding: 13px 22px; border-radius: 12px;
+      font-weight: 600; font-size: 0.95rem; display: none; z-index: 200;
+    }
+    .toast.show { display: block; }
+    .toast.error { background: #b91c1c; }
+    .hidden { display: none !important; }
+    .barra-seleccion {
+      position: fixed; bottom: 0; left: 0; right: 0; background: white;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.12); padding: 14px 18px; display: none; z-index: 50;
+    }
+    .barra-seleccion.show { display: block; }
+    .barra-contenido {
+      max-width: 960px; margin: 0 auto; display: flex; align-items: center;
+      justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .barra-info { font-size: 0.95rem; font-weight: 600; color: #334155; }
+    .barra-info span { color: #ca8a04; font-size: 1.15rem; }
+    .barra-total { font-size: 1.05rem; font-weight: 800; color: #16a34a; }
+    .barra-botones { display: flex; gap: 10px; }
+    .lista-rifas { display: flex; flex-direction: column; gap: 10px; }
+    .item-rifa {
+      border: 2px solid #e2e8f0; border-radius: 12px; padding: 14px;
+      display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: #f8fafc;
+    }
+    .item-rifa strong { font-size: 1rem; color: #1e1b4b; }
+    .item-rifa small { color: #64748b; display: block; margin-top: 2px; }
+    .error-box {
+      background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+      border-radius: 12px; padding: 14px; margin-bottom: 16px; font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ADMIN: LISTA DE RIFAS -->
+  <div id="vistaLista" class="container">
+    <header class="admin-header">
+      <h1>Mis Rifas</h1>
+      <p>Crea y administra varias rifas</p>
+    </header>
+
+    <div id="errorFirebase" class="error-box hidden">
+      No se pudo conectar con Firebase. Revisa tu internet o las reglas de la base de datos.
+    </div>
+
+    <div class="card">
+      <h2>Crear nueva rifa</h2>
+      <div class="form-group">
+        <label>Nombre de la nueva rifa</label>
+        <input type="text" id="nuevaRifaNombre" placeholder="Ej: Rifa TV 55 pulgadas">
+      </div>
+      <button class="btn btn-purple" id="btnNuevaRifa">Crear rifa</button>
+    </div>
+
+    <div class="card">
+      <h2>Rifas existentes</h2>
+      <div id="listaRifas" class="lista-rifas">
+        <div class="loading">Cargando rifas...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN: DETALLE DE UNA RIFA -->
+  <div id="vistaAdmin" class="container hidden">
+    <header class="admin-header">
+      <button class="btn btn-secondary" id="btnVolverLista" style="position:absolute;left:12px;top:12px;padding:6px 12px;font-size:0.82rem">← Rifas</button>
+      <h1 id="adminTitulo">Administrar rifa</h1>
+    </header>
+
+    <div class="card">
+      <h2>Configurar Rifa</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre de la rifa</label>
+          <input type="text" id="nombreRifa" placeholder="Ej: Rifa iPhone 16">
+        </div>
+        <div class="form-group">
+          <label>Total de números</label>
+          <input type="number" id="totalNumeros" min="1" max="1000" value="100">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Precio por número (₡)</label>
+          <input type="number" id="precioNumero" min="0" step="1" value="50">
+        </div>
+        <div class="form-group">
+          <label>Descripción (opcional)</label>
+          <input type="text" id="descripcionRifaAdmin" placeholder="Ej: Sorteo el 30 de agosto">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Foto del premio</label>
+        <input type="file" id="inputFoto" accept="image/*" style="padding:8px;border:2px dashed #e2e8f0;border-radius:10px;width:100%;background:#f8fafc">
+        <small style="color:#64748b;font-size:0.78rem;display:block;margin-top:4px">Se comprime sola (plan gratuito)</small>
+      </div>
+      <input type="hidden" id="fotoPremio" value="">
+      <div id="previewFotoAdmin" style="display:none;margin-bottom:12px;text-align:center">
+        <img id="imgPreviewAdmin" src="" alt="Premio" style="max-width:100%;max-height:200px;border-radius:12px;object-fit:contain">
+        <br>
+        <button type="button" class="btn btn-secondary" id="btnQuitarFoto" style="margin-top:8px;padding:8px 14px;font-size:0.85rem">Quitar foto</button>
+      </div>
+      <div id="subiendoFoto" style="display:none;text-align:center;color:#7c3aed;font-size:0.9rem;margin-bottom:10px">Procesando foto...</div>
+      <div class="actions">
+        <button class="btn btn-purple" id="btnCrear">Guardar cambios</button>
+        <button class="btn btn-danger" id="btnReiniciar">Reiniciar números</button>
+      </div>
+      <div class="link-box">
+        <strong>Link para compartir:</strong>
+        <div class="link-row"><div class="url" id="urlPublica">-</div></div>
+        <div class="actions" style="margin-top:10px">
+          <button class="btn btn-whatsapp" id="btnCompartirWhatsApp">Compartir por WhatsApp</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Estado actual</h2>
+      <div class="stats" style="justify-content:flex-start;margin-top:0">
+        <div class="stat-box"><div class="num" id="statDisponibles">-</div><div class="label">Disponibles</div></div>
+        <div class="stat-box"><div class="num" id="statReservados">-</div><div class="label">Reservados</div></div>
+        <div class="stat-box"><div class="num" id="statPagados">-</div><div class="label">Pagados</div></div>
+        <div class="stat-box"><div class="num" id="statTotal">-</div><div class="label">Total</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Todos los números</h2>
+      <div class="leyenda">
+        <span><span class="dot dot-disponible"></span> Disponible</span>
+        <span><span class="dot dot-reservado"></span> Reservado</span>
+        <span><span class="dot dot-pagado"></span> Pagado</span>
+      </div>
+      <div id="gridAdmin" class="grid"><div class="loading">Cargando...</div></div>
+      <p style="font-size:0.8rem;color:#64748b;margin-top:8px">Toca cualquier número para cambiar su estado.</p>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <h2 style="margin:0">Lista de reservados / pagados</h2>
+        <button class="btn btn-success" id="btnExcel" style="padding:8px 14px;font-size:0.85rem">Descargar Excel</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr><th>Nº</th><th>Nombre</th><th>Teléfono</th><th>Estado</th><th>Fecha</th></tr>
+          </thead>
+          <tbody id="tablaReservados">
+            <tr><td colspan="5" style="text-align:center;color:#94a3b8">Sin datos</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PÚBLICO -->
+  <div id="vistaPublica" class="container hidden">
+    <header>
+      <h1 id="tituloRifa">Cargando rifa...</h1>
+      <p id="descripcionRifa"></p>
+      <div id="fotoPremioPublico" style="display:none;margin:12px auto 4px;max-width:280px">
+        <img id="imgPremioPublico" src="" alt="Premio" style="width:100%;border-radius:14px;object-fit:cover;max-height:220px">
+      </div>
+      <div class="stats">
+        <div class="stat">Disponibles: <strong id="disponibles">-</strong></div>
+        <div class="stat">Precio: <strong id="precioPublico">-</strong></div>
+        <div class="stat">Total: <strong id="total">-</strong></div>
+      </div>
+    </header>
+    <p style="text-align:center;color:#64748b;font-size:0.9rem;margin-bottom:14px">Toca los números que quieras · Puedes elegir varios</p>
+    <div id="contenido"><div class="loading">Cargando números...</div></div>
+  </div>
+
+  <div class="barra-seleccion" id="barraSeleccion">
+    <div class="barra-contenido">
+      <div>
+        <div class="barra-info"><span id="cantidadSeleccionados">0</span> número(s)</div>
+        <div class="barra-total" id="totalPagar">Total: ₡0</div>
+      </div>
+      <div class="barra-botones">
+        <button class="btn btn-secondary" id="btnLimpiarSeleccion">Limpiar</button>
+        <button class="btn btn-primary" id="btnConfirmarSeleccion">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalReserva">
+    <div class="modal">
+      <h2>Confirmar reserva</h2>
+      <div class="numeros-seleccionados" id="listaNumerosModal">-</div>
+      <div class="total-modal" id="totalModal">Total: ₡0</div>
+      <form id="formReserva">
+        <div class="form-group">
+          <label>Nombre completo</label>
+          <input type="text" id="nombre" required placeholder="Ej: Juan Pérez">
+        </div>
+        <div class="form-group">
+          <label>Teléfono / WhatsApp</label>
+          <input type="tel" id="telefono" required placeholder="Ej: 8888 8888">
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnReservar">Reservar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalEstado">
+    <div class="modal">
+      <h2>Número <span id="numEstadoTitulo">-</span></h2>
+      <p style="text-align:center;color:#64748b;margin:8px 0 16px;font-size:0.9rem" id="infoEstado"></p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn" style="background:#22c55e;color:white" id="btnEstadoDisponible">Disponible</button>
+        <button class="btn" style="background:#f97316;color:white" id="btnEstadoReservado">Reservado</button>
+        <button class="btn" style="background:#3b82f6;color:white" id="btnEstadoPagado">Pagado</button>
+        <button class="btn btn-secondary" id="btnCancelarEstado">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voucher -->
+  <div class="modal-overlay" id="modalVoucher">
+    <div class="modal" style="max-width:400px">
+      <h2 style="text-align:center">Comprobante de reserva</h2>
+      <div id="voucherContenido" style="background:#f8fafc;border:2px dashed #cbd5e1;border-radius:12px;padding:16px;margin:14px 0;font-size:0.95rem;line-height:1.5">
+      </div>
+      <canvas id="voucherCanvas" style="display:none"></canvas>
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" id="btnCerrarVoucher">Cerrar</button>
+        <button type="button" class="btn btn-success" id="btnDescargarVoucher">Descargar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAcJ8Jv2WJCl3jlbwTItxESgQD_AGlJQQ",
+      authDomain: "nuevo-8c7a8.firebaseapp.com",
+      databaseURL: "https://nuevo-8c7a8-default-rtdb.firebaseio.com",
+      projectId: "nuevo-8c7a8",
+      storageBucket: "nuevo-8c7a8.firebasestorage.app",
+      messagingSenderId: "109852011535",
+      appId: "1:109852011535:web:01774f3680b8f4d967477a",
+      measurementId: "G-R3R0M3G79M"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const rifasRef = db.ref("rifas");
+
+    var seleccionados = [];
+    var precioActual = 0;
+    var rifaActualId = null;
+    var listenerRifa = null;
+    var numeroEstadoActual = null;
+
+    var params = new URLSearchParams(window.location.search);
+    var esPublico = params.has("publico");
+    var idPublico = params.get("id");
+
+    const vistaLista = document.getElementById("vistaLista");
+    const vistaAdmin = document.getElementById("vistaAdmin");
+    const vistaPublica = document.getElementById("vistaPublica");
+
+    // Timeout si Firebase no responde
+    var timeoutCarga = setTimeout(function() {
+      var el = document.getElementById("listaRifas");
+      if (el && el.innerHTML.indexOf("Cargando") !== -1) {
+        el.innerHTML = '<div class="empty">No se pudo cargar. Revisa internet o las reglas de Firebase.</div>';
+        document.getElementById("errorFirebase").classList.remove("hidden");
+      }
+      var cont = document.getElementById("contenido");
+      if (cont && cont.innerHTML.indexOf("Cargando") !== -1) {
+        cont.innerHTML = '<div class="empty">No se pudo cargar la rifa.</div>';
+      }
+    }, 8000);
+
+    if (esPublico) {
+      vistaLista.classList.add("hidden");
+      vistaAdmin.classList.add("hidden");
+      vistaPublica.classList.remove("hidden");
+      if (!idPublico) {
+        document.getElementById("contenido").innerHTML = '<div class="empty">Link incompleto. Falta el ID de la rifa.</div>';
+        document.getElementById("tituloRifa").textContent = "Error";
+      } else {
+        db.ref("rifas/" + idPublico).on("value", function(s) {
+          clearTimeout(timeoutCarga);
+          actualizarVistaPublica(s.val());
+        }, function(err) {
+          clearTimeout(timeoutCarga);
+          document.getElementById("contenido").innerHTML = '<div class="empty">Error de conexión con Firebase.</div>';
+        });
+      }
+    } else {
+      // Lista de rifas
+      rifasRef.on("value", function(snap) {
+        clearTimeout(timeoutCarga);
+        document.getElementById("errorFirebase").classList.add("hidden");
+        renderListaRifas(snap.val() || {});
+      }, function(err) {
+        clearTimeout(timeoutCarga);
+        document.getElementById("errorFirebase").classList.remove("hidden");
+        document.getElementById("listaRifas").innerHTML = '<div class="empty">Error al conectar con Firebase.</div>';
+      });
+    }
+
+    function renderListaRifas(data) {
+      var keys = Object.keys(data || {});
+      // Migrar rifa antigua "principal" si existe
+      if (keys.length === 0) {
+        document.getElementById("listaRifas").innerHTML = '<div class="empty">Aún no tienes rifas. Crea la primera arriba.</div>';
+        return;
+      }
+      var html = "";
+      keys.forEach(function(id) {
+        var r = data[id] || {};
+        var cfg = r.config || {};
+        var nombre = cfg.nombre || id;
+        var total = cfg.totalNumeros || 0;
+        html += '<div class="item-rifa">' +
+          '<div><strong>' + escapeHtml(nombre) + '</strong><small>' + total + ' números · ID: ' + id + '</small></div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+          '<button class="btn btn-purple" style="padding:8px 12px;font-size:0.85rem" data-abrir="' + id + '">Administrar</button>' +
+          '<button class="btn btn-danger" style="padding:8px 12px;font-size:0.85rem" data-borrar="' + id + '">Borrar</button>' +
+          '</div></div>';
+      });
+      document.getElementById("listaRifas").innerHTML = html;
+
+      document.querySelectorAll("[data-abrir]").forEach(function(btn) {
+        btn.addEventListener("click", function() { abrirRifa(btn.getAttribute("data-abrir")); });
+      });
+      document.querySelectorAll("[data-borrar]").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          var id = btn.getAttribute("data-borrar");
+          if (!confirm("¿Borrar esta rifa por completo?")) return;
+          db.ref("rifas/" + id).remove().then(function() {
+            mostrarToast("Rifa eliminada");
+            if (rifaActualId === id) {
+              vistaAdmin.classList.add("hidden");
+              vistaLista.classList.remove("hidden");
+            }
+          });
+        });
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    function formatNumero(n, total) {
+      n = parseInt(n, 10);
+      total = parseInt(total, 10) || 100;
+      var digitos = String(total).length;
+      if (digitos < 2) digitos = 2;
+      return String(n).padStart(digitos, "0");
+    }
+
+    document.getElementById("btnNuevaRifa").addEventListener("click", function() {
+      var nombre = document.getElementById("nuevaRifaNombre").value.trim();
+      if (!nombre) return mostrarToast("Escribe un nombre", true);
+      var id = "r" + Date.now();
+      db.ref("rifas/" + id + "/config").set({
+        nombre: nombre,
+        totalNumeros: 100,
+        precio: 50,
+        descripcion: "",
+        foto: "",
+        creada: new Date().toISOString()
+      }).then(function() {
+        var updates = {};
+        for (var i = 1; i <= 100; i++) updates[i] = { estado: "disponible" };
+        return db.ref("rifas/" + id + "/numeros").set(updates);
+      }).then(function() {
+        document.getElementById("nuevaRifaNombre").value = "";
+        mostrarToast("Rifa creada");
+        abrirRifa(id);
+      }).catch(function() {
+        mostrarToast("Error al crear. Revisa reglas de Firebase.", true);
+      });
+    });
+
+    function abrirRifa(id) {
+      rifaActualId = id;
+      if (listenerRifa) {
+        db.ref("rifas/" + id).off("value", listenerRifa);
+      }
+      vistaLista.classList.add("hidden");
+      vistaAdmin.classList.remove("hidden");
+      actualizarLinkPublico();
+      listenerRifa = function(s) { actualizarVistaAdmin(s.val()); };
+      db.ref("rifas/" + id).on("value", listenerRifa);
+    }
+
+    document.getElementById("btnVolverLista").addEventListener("click", function() {
+      if (listenerRifa && rifaActualId) {
+        db.ref("rifas/" + rifaActualId).off("value", listenerRifa);
+        listenerRifa = null;
+      }
+      rifaActualId = null;
+      vistaAdmin.classList.add("hidden");
+      vistaLista.classList.remove("hidden");
+    });
+
+    function getLinkPublico() {
+      if (!rifaActualId) return "";
+      var base = window.location.href.split("?")[0].split("#")[0];
+      return base + "?publico&id=" + rifaActualId;
+    }
+
+    function actualizarLinkPublico() {
+      document.getElementById("urlPublica").textContent = getLinkPublico();
+    }
+
+    document.getElementById("btnCompartirWhatsApp").addEventListener("click", function() {
+      var link = getLinkPublico();
+      var texto = "¡Participa en la rifa! Elige tus números aquí: " + link;
+      window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank");
+    });
+
+    function actualizarVistaAdmin(data) {
+      if (!data || !data.config) {
+        document.getElementById("gridAdmin").innerHTML = '<div class="empty">Sin configuración</div>';
+        return;
+      }
+      var cfg = data.config;
+      document.getElementById("adminTitulo").textContent = cfg.nombre || "Rifa";
+      document.getElementById("nombreRifa").value = cfg.nombre || "";
+      document.getElementById("totalNumeros").value = cfg.totalNumeros || 100;
+      document.getElementById("precioNumero").value = cfg.precio || 50;
+      document.getElementById("descripcionRifaAdmin").value = cfg.descripcion || "";
+      document.getElementById("fotoPremio").value = cfg.foto || "";
+      if (cfg.foto) {
+        document.getElementById("imgPreviewAdmin").src = cfg.foto;
+        document.getElementById("previewFotoAdmin").style.display = "block";
+      } else {
+        document.getElementById("previewFotoAdmin").style.display = "none";
+      }
+
+      var total = cfg.totalNumeros || 0;
+      var numeros = data.numeros || {};
+      var disponibles = 0, reservados = 0, pagados = 0, lista = [];
+      var gridHtml = "";
+
+      for (var i = 1; i <= total; i++) {
+        var n = numeros[i];
+        var estado = n ? n.estado : "disponible";
+        if (estado === "disponible") disponibles++;
+        else if (estado === "pagado") pagados++;
+        else { reservados++; estado = "reservado"; }
+
+        gridHtml += '<button class="numero ' + estado + '" data-num="' + i + '" data-estado="' + estado + '">' + formatNumero(i, total) + '</button>';
+        if (estado === "reservado" || estado === "pagado") {
+          lista.push({
+            numero: i,
+            nombre: (n && n.nombre) || "-",
+            telefono: (n && n.telefono) || "-",
+            estado: estado,
+            fecha: (n && n.fecha) ? new Date(n.fecha).toLocaleString("es-CR") : "-"
+          });
+        }
+      }
+      document.getElementById("gridAdmin").innerHTML = gridHtml || '<div class="empty">Sin números</div>';
+
+      document.querySelectorAll("#gridAdmin .numero").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          abrirModalEstado(btn.dataset.num, btn.dataset.estado || "disponible");
+        });
+      });
+
+      document.getElementById("statDisponibles").textContent = disponibles;
+      document.getElementById("statReservados").textContent = reservados;
+      document.getElementById("statPagados").textContent = pagados;
+      document.getElementById("statTotal").textContent = total;
+
+      if (!lista.length) {
+        document.getElementById("tablaReservados").innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8">Ninguno aún</td></tr>';
+      } else {
+        lista.sort(function(a,b){ return a.numero - b.numero; });
+        document.getElementById("tablaReservados").innerHTML = lista.map(function(r) {
+          var bc = r.estado === "pagado" ? "badge-pagado" : "badge-reservado";
+          var bt = r.estado === "pagado" ? "Pagado" : "Reservado";
+          return "<tr><td><strong>" + formatNumero(r.numero, total) + "</strong></td><td>" + escapeHtml(r.nombre) + "</td><td>" + escapeHtml(r.telefono) + "</td><td><span class=\"badge " + bc + "\">" + bt + "</span></td><td>" + r.fecha + "</td></tr>";
+        }).join("");
+      }
+    }
+
+    function actualizarVistaPublica(data) {
+      if (!data || !data.config) {
+        document.getElementById("contenido").innerHTML = '<div class="empty">Esta rifa no existe o aún no está configurada.</div>';
+        document.getElementById("tituloRifa").textContent = "Rifa no encontrada";
+        return;
+      }
+      var config = data.config;
+      precioActual = parseFloat(config.precio) || 0;
+      document.getElementById("tituloRifa").textContent = config.nombre || "Rifa";
+      document.getElementById("descripcionRifa").textContent = config.descripcion || "";
+      document.getElementById("precioPublico").textContent = precioActual > 0 ? ("₡" + precioActual) : "-";
+      if (config.foto) {
+        document.getElementById("imgPremioPublico").src = config.foto;
+        document.getElementById("fotoPremioPublico").style.display = "block";
+      } else {
+        document.getElementById("fotoPremioPublico").style.display = "none";
+      }
+
+      var numeros = data.numeros || {};
+      var total = config.totalNumeros || 0;
+      var disponibles = 0;
+      seleccionados = seleccionados.filter(function(n) {
+        var est = numeros[n] ? numeros[n].estado : "disponible";
+        return est === "disponible";
+      });
+      actualizarBarra();
+
+      var html = '<div class="grid">';
+      for (var i = 1; i <= total; i++) {
+        var num = numeros[i];
+        var estado = num ? num.estado : "disponible";
+        if (estado === "disponible") {
+          disponibles++;
+          var sel = seleccionados.indexOf(i) !== -1 ? " seleccionado" : "";
+          html += '<button class="numero' + sel + '" data-num="' + i + '">' + formatNumero(i, total) + '</button>';
+        }
+      }
+      html += '</div>';
+      if (disponibles === 0) html = '<div class="empty"><p>Ya no hay números disponibles.</p></div>';
+      document.getElementById("contenido").innerHTML = html;
+      document.getElementById("disponibles").textContent = disponibles;
+      document.getElementById("total").textContent = total;
+
+      document.querySelectorAll("#contenido .numero").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          var num = parseInt(btn.dataset.num);
+          var idx = seleccionados.indexOf(num);
+          if (idx === -1) { seleccionados.push(num); btn.classList.add("seleccionado"); }
+          else { seleccionados.splice(idx, 1); btn.classList.remove("seleccionado"); }
+          actualizarBarra();
+        });
+      });
+    }
+
+    function actualizarBarra() {
+      document.getElementById("cantidadSeleccionados").textContent = seleccionados.length;
+      document.getElementById("totalPagar").textContent = "Total: ₡" + (seleccionados.length * precioActual);
+      document.getElementById("barraSeleccion").classList.toggle("show", seleccionados.length > 0);
+    }
+
+    document.getElementById("btnLimpiarSeleccion").addEventListener("click", function() {
+      seleccionados = [];
+      document.querySelectorAll("#contenido .numero.seleccionado").forEach(function(b){ b.classList.remove("seleccionado"); });
+      actualizarBarra();
+    });
+
+    document.getElementById("btnConfirmarSeleccion").addEventListener("click", function() {
+      if (!seleccionados.length) return;
+      seleccionados.sort(function(a,b){ return a-b; });
+      var totalPub = parseInt(document.getElementById("total").textContent) || 100;
+      document.getElementById("listaNumerosModal").textContent = "Números: " + seleccionados.map(function(n){ return formatNumero(n, totalPub); }).join(", ");
+      document.getElementById("totalModal").textContent = "Total a pagar: ₡" + (seleccionados.length * precioActual);
+      document.getElementById("nombre").value = "";
+      document.getElementById("telefono").value = "";
+      document.getElementById("modalReserva").classList.add("show");
+    });
+
+    document.getElementById("btnCancelar").addEventListener("click", function() {
+      document.getElementById("modalReserva").classList.remove("show");
+    });
+
+    document.getElementById("formReserva").addEventListener("submit", function(e) {
+      e.preventDefault();
+      if (!seleccionados.length || !idPublico) return;
+      var nombre = document.getElementById("nombre").value.trim();
+      var telefono = document.getElementById("telefono").value.trim();
+      if (!nombre || !telefono) return;
+      var btn = document.getElementById("btnReservar");
+      btn.disabled = true;
+      btn.textContent = "Reservando...";
+
+      var promesas = seleccionados.map(function(num) {
+        return db.ref("rifas/" + idPublico + "/numeros/" + num).transaction(function(current) {
+          if (current === null || current.estado === "disponible") {
+            return { estado: "reservado", nombre: nombre, telefono: telefono, fecha: new Date().toISOString() };
+          }
+          return;
+        });
+      });
+
+      Promise.all(promesas).then(function(results) {
+        var okNums = [], fail = [];
+        for (var i = 0; i < results.length; i++) {
+          if (results[i].committed) okNums.push(seleccionados[i]);
+          else fail.push(seleccionados[i]);
+        }
+        if (okNums.length) {
+          mostrarToast(okNums.length + " número(s) reservado(s)");
+          mostrarVoucher(okNums, nombre, telefono);
+        }
+        if (fail.length) mostrarToast("Ya tomados: " + fail.join(", "), true);
+        seleccionados = [];
+        actualizarBarra();
+        document.getElementById("modalReserva").classList.remove("show");
+      }).catch(function() {
+        mostrarToast("Error al reservar", true);
+      }).finally(function() {
+        btn.disabled = false;
+        btn.textContent = "Reservar";
+      });
+    });
+
+    // Foto base64
+    document.getElementById("inputFoto").addEventListener("change", function(e) {
+      var file = e.target.files[0];
+      if (!file || !file.type.startsWith("image/")) return mostrarToast("Solo imágenes", true);
+      document.getElementById("subiendoFoto").style.display = "block";
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var img = new Image();
+        img.onload = function() {
+          var max = 800, w = img.width, h = img.height;
+          if (w > max) { h = Math.round(h * max / w); w = max; }
+          var c = document.createElement("canvas");
+          c.width = w; c.height = h;
+          c.getContext("2d").drawImage(img, 0, 0, w, h);
+          var dataUrl = c.toDataURL("image/jpeg", 0.65);
+          if (dataUrl.length > 900000) dataUrl = c.toDataURL("image/jpeg", 0.4);
+          if (dataUrl.length > 900000) {
+            document.getElementById("subiendoFoto").style.display = "none";
+            return mostrarToast("Imagen muy pesada", true);
+          }
+          document.getElementById("fotoPremio").value = dataUrl;
+          document.getElementById("imgPreviewAdmin").src = dataUrl;
+          document.getElementById("previewFotoAdmin").style.display = "block";
+          document.getElementById("subiendoFoto").style.display = "none";
+          mostrarToast("Foto lista. Guarda los cambios.");
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("btnQuitarFoto").addEventListener("click", function() {
+      document.getElementById("fotoPremio").value = "";
+      document.getElementById("inputFoto").value = "";
+      document.getElementById("previewFotoAdmin").style.display = "none";
+    });
+
+    document.getElementById("btnCrear").addEventListener("click", function() {
+      if (!rifaActualId) return;
+      var nombre = document.getElementById("nombreRifa").value.trim();
+      var total = parseInt(document.getElementById("totalNumeros").value) || 100;
+      var precio = parseFloat(document.getElementById("precioNumero").value) || 0;
+      var descripcion = document.getElementById("descripcionRifaAdmin").value.trim();
+      var foto = document.getElementById("fotoPremio").value;
+      if (!nombre) return mostrarToast("Escribe un nombre", true);
+      if (total < 1 || total > 1000) return mostrarToast("Total entre 1 y 1000", true);
+
+      var btn = document.getElementById("btnCrear");
+      btn.disabled = true;
+      btn.textContent = "Guardando...";
+
+      db.ref("rifas/" + rifaActualId + "/config").set({
+        nombre: nombre,
+        totalNumeros: total,
+        precio: precio,
+        descripcion: descripcion,
+        foto: foto || "",
+        creada: new Date().toISOString()
+      }).then(function() {
+        return db.ref("rifas/" + rifaActualId + "/numeros").once("value");
+      }).then(function(snap) {
+        var existentes = snap.val() || {};
+        var updates = {};
+        for (var i = 1; i <= total; i++) {
+          if (!existentes[i]) updates[i] = { estado: "disponible" };
+        }
+        if (Object.keys(updates).length) {
+          return db.ref("rifas/" + rifaActualId + "/numeros").update(updates);
+        }
+      }).then(function() {
+        mostrarToast("Guardado");
+        actualizarLinkPublico();
+      }).catch(function(err) {
+        console.error(err);
+        mostrarToast("Error al guardar (¿foto muy grande?)", true);
+      }).finally(function() {
+        btn.disabled = false;
+        btn.textContent = "Guardar cambios";
+      });
+    });
+
+    document.getElementById("btnReiniciar").addEventListener("click", function() {
+      if (!rifaActualId) return;
+      if (!confirm("¿Borrar todas las reservas?")) return;
+      var total = parseInt(document.getElementById("totalNumeros").value) || 100;
+      var updates = {};
+      for (var i = 1; i <= total; i++) updates[i] = { estado: "disponible" };
+      db.ref("rifas/" + rifaActualId + "/numeros").set(updates)
+        .then(function() { mostrarToast("Números reiniciados"); })
+        .catch(function() { mostrarToast("Error", true); });
+    });
+
+    function abrirModalEstado(num, estado) {
+      numeroEstadoActual = num;
+      var tot = parseInt(document.getElementById("statTotal").textContent) || 100;
+      document.getElementById("numEstadoTitulo").textContent = formatNumero(num, tot);
+      var t = estado === "pagado" ? "Pagado" : (estado === "reservado" ? "Reservado" : "Disponible");
+      document.getElementById("infoEstado").textContent = "Estado actual: " + t;
+      document.getElementById("modalEstado").classList.add("show");
+    }
+    function cerrarModalEstado() {
+      document.getElementById("modalEstado").classList.remove("show");
+      numeroEstadoActual = null;
+    }
+    document.getElementById("btnCancelarEstado").addEventListener("click", cerrarModalEstado);
+
+    function cambiarEstado(nuevo) {
+      if (!numeroEstadoActual || !rifaActualId) return;
+      var num = numeroEstadoActual;
+      var ref = db.ref("rifas/" + rifaActualId + "/numeros/" + num);
+      if (nuevo === "disponible") {
+        ref.set({ estado: "disponible" }).then(function() {
+          mostrarToast("Número " + num + " disponible");
+          cerrarModalEstado();
+        });
+      } else {
+        ref.once("value").then(function(snap) {
+          var a = snap.val() || {};
+          return ref.set({
+            estado: nuevo,
+            nombre: a.nombre || "",
+            telefono: a.telefono || "",
+            fecha: a.fecha || new Date().toISOString()
+          });
+        }).then(function() {
+          mostrarToast("Número " + num + " → " + nuevo);
+          cerrarModalEstado();
+        });
+      }
+    }
+    document.getElementById("btnEstadoDisponible").addEventListener("click", function(){ cambiarEstado("disponible"); });
+    document.getElementById("btnEstadoReservado").addEventListener("click", function(){ cambiarEstado("reservado"); });
+    document.getElementById("btnEstadoPagado").addEventListener("click", function(){ cambiarEstado("pagado"); });
+
+
+    document.getElementById("btnExcel").addEventListener("click", function() {
+      if (!rifaActualId) return mostrarToast("Abre una rifa primero", true);
+      db.ref("rifas/" + rifaActualId).once("value").then(function(snap) {
+        var data = snap.val();
+        if (!data || !data.config) return mostrarToast("Sin datos", true);
+        var total = data.config.totalNumeros || 0;
+        var numeros = data.numeros || {};
+        var filas = [["Numero", "Nombre", "Telefono", "Estado", "Fecha"]];
+        for (var i = 1; i <= total; i++) {
+          var n = numeros[i];
+          if (n && (n.estado === "reservado" || n.estado === "pagado")) {
+            filas.push([
+              formatNumero(i, total),
+              n.nombre || "",
+              n.telefono || "",
+              n.estado === "pagado" ? "Pagado" : "Reservado",
+              n.fecha ? new Date(n.fecha).toLocaleString("es-CR") : ""
+            ]);
+          }
+        }
+        if (filas.length === 1) return mostrarToast("No hay reservados aún", true);
+
+        // CSV con BOM para que Excel abra bien los acentos
+        var csv = "\uFEFF" + filas.map(function(row) {
+          return row.map(function(cell) {
+            var c = String(cell).replace(/"/g, '""');
+            return '"' + c + '"';
+          }).join(",");
+        }).join("\n");
+
+        var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        var nombre = (data.config.nombre || "rifa").replace(/[^\w\s-]/g, "").trim() || "rifa";
+        a.download = nombre + "_reservados.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        mostrarToast("Excel descargado");
+      }).catch(function() {
+        mostrarToast("Error al generar Excel", true);
+      });
+    });
+
+
+    var ultimoVoucher = null;
+
+    function mostrarVoucher(nums, nombre, telefono) {
+      nums = nums.slice().sort(function(a,b){ return a-b; });
+      var totalNums = parseInt(document.getElementById("total").textContent) || 100;
+      var titulo = document.getElementById("tituloRifa").textContent || "Rifa";
+      var totalPagar = nums.length * precioActual;
+      var numsFmt = nums.map(function(n){ return formatNumero(n, totalNums); }).join(", ");
+      var fecha = new Date().toLocaleString("es-CR");
+
+      ultimoVoucher = {
+        titulo: titulo,
+        numsFmt: numsFmt,
+        nombre: nombre,
+        telefono: telefono,
+        totalPagar: totalPagar,
+        cantidad: nums.length,
+        fecha: fecha
+      };
+
+      document.getElementById("voucherContenido").innerHTML =
+        "<div style='text-align:center;font-weight:800;font-size:1.1rem;margin-bottom:8px'>" + escapeHtml(titulo) + "</div>" +
+        "<div><strong>Números:</strong> " + escapeHtml(numsFmt) + "</div>" +
+        "<div><strong>Cantidad:</strong> " + nums.length + "</div>" +
+        "<div><strong>Nombre:</strong> " + escapeHtml(nombre) + "</div>" +
+        "<div><strong>Teléfono:</strong> " + escapeHtml(telefono) + "</div>" +
+        "<div style='margin-top:8px;font-size:1.15rem;font-weight:800;color:#16a34a'>Total: ₡" + totalPagar + "</div>" +
+        "<div style='margin-top:8px;font-size:0.8rem;color:#64748b'>" + fecha + "</div>" +
+        "<div style='margin-top:6px;font-size:0.75rem;color:#94a3b8;text-align:center'>Guarda este comprobante</div>";
+
+      document.getElementById("modalVoucher").classList.add("show");
+    }
+
+    document.getElementById("btnCerrarVoucher").addEventListener("click", function() {
+      document.getElementById("modalVoucher").classList.remove("show");
+    });
+
+    document.getElementById("btnDescargarVoucher").addEventListener("click", function() {
+      if (!ultimoVoucher) return;
+      var v = ultimoVoucher;
+      var canvas = document.getElementById("voucherCanvas");
+      var ctx = canvas.getContext("2d");
+      var w = 640, h = 520;
+      canvas.width = w;
+      canvas.height = h;
+
+      // fondo
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(16, 16, w-32, h-32);
+
+      ctx.fillStyle = "#5b21b6";
+      ctx.font = "bold 28px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("COMPROBANTE DE RESERVA", w/2, 60);
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 22px sans-serif";
+      ctx.fillText(v.titulo.substring(0, 40), w/2, 105);
+
+      ctx.textAlign = "left";
+      ctx.font = "18px sans-serif";
+      var y = 160;
+      var lines = [
+        "Números: " + v.numsFmt,
+        "Cantidad: " + v.cantidad,
+        "Nombre: " + v.nombre,
+        "Teléfono: " + v.telefono,
+        "",
+        "Total: ₡" + v.totalPagar,
+        "",
+        "Fecha: " + v.fecha
+      ];
+      lines.forEach(function(line) {
+        if (line.indexOf("Total:") === 0) {
+          ctx.fillStyle = "#16a34a";
+          ctx.font = "bold 24px sans-serif";
+        } else {
+          ctx.fillStyle = "#0f172a";
+          ctx.font = "18px sans-serif";
+        }
+        // wrap long lines
+        var maxWidth = w - 80;
+        var words = line.split(" ");
+        var current = "";
+        words.forEach(function(word) {
+          var test = current ? current + " " + word : word;
+          if (ctx.measureText(test).width > maxWidth && current) {
+            ctx.fillText(current, 50, y);
+            y += 28;
+            current = word;
+          } else {
+            current = test;
+          }
+        });
+        if (current) {
+          ctx.fillText(current, 50, y);
+          y += 32;
+        }
+      });
+
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "14px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Guarda este comprobante como respaldo", w/2, h - 40);
+
+      canvas.toBlob(function(blob) {
+        if (!blob) return mostrarToast("No se pudo generar la imagen", true);
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "voucher_rifa.png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        mostrarToast("Voucher descargado");
+      }, "image/png");
+    });
+
+    function mostrarToast(msg, esError) {
+      var t = document.getElementById("toast");
+      t.textContent = msg;
+      t.className = "toast show" + (esError ? " error" : "");
+      setTimeout(function(){ t.classList.remove("show"); }, 3500);
+    }
+  </script>
+</body>
+</html>
